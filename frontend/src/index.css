@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #60a5fa;
+  --color-primary-dark: #93c5fd;
+}
+
+body {
+  background: linear-gradient(to bottom right, #dbeafe, #f0f9ff, #ffffff);
+  min-height: 100vh;
+}
+
+.chat-message {
+  max-width: 80%;
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.06);
+  animation: fade-in 0.3s ease-out;
+}
+
+.chat-message-user {
+  background: linear-gradient(to right, #60a5fa, #93c5fd);
+  color: white;
+  margin-left: auto;
+  border-bottom-right-radius: 0.125rem;
+}
+
+.chat-message-assistant {
+  background: white;
+  border: 1px solid rgb(229 231 235);
+  border-bottom-left-radius: 0.125rem;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
