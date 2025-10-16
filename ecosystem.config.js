@@ -16,10 +16,7 @@ module.exports = {
       error_file: './logs/backend-error.log',
       out_file: './logs/backend-out.log',
       log_file: './logs/backend-combined.log',
-      time: true,
-      // Pre-requisites
-      pre_deploy_local: 'npm run build',
-      post_update: 'npm install && npm run build'
+      time: true
     },
     {
       name: 'chatbot-frontend',
@@ -38,10 +35,7 @@ module.exports = {
       error_file: './logs/frontend-error.log',
       out_file: './logs/frontend-out.log',
       log_file: './logs/frontend-combined.log',
-      time: true,
-      // Pre-requisites
-      pre_deploy_local: 'npm run build',
-      post_update: 'npm install && npm run build'
+      time: true
     }
   ]
 };
