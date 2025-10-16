@@ -19,7 +19,7 @@ const options: swaggerJsdoc.Options = {
         description: 'Development server'
       },
       {
-        url: 'https://your-domain.com',
+        url: 'http://63.180.58.146',
         description: 'Production server'
       }
     ],
