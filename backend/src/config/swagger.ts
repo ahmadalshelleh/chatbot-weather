@@ -1,6 +1,8 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import { SwaggerUiOptions } from 'swagger-ui-express';
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.0',
@@ -13,11 +15,12 @@ const options: swaggerJsdoc.Options = {
         email: 'support@chatbot.com'
       }
     },
-    servers: [
+    servers: isDevelopment ? [
       {
         url: `http://localhost:${process.env.PORT || 3001}`,
         description: 'Development server'
-      },
+      }
+    ] : [
       {
         url: 'http://63.180.58.146',
         description: 'Production server'
