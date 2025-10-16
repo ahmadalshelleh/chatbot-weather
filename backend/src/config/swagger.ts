@@ -80,7 +80,7 @@ const options: swaggerJsdoc.Options = {
             },
             model: {
               type: 'string',
-              enum: ['openai', 'anthropic', 'deepseek'],
+              enum: ['openai', 'deepseek'],
               description: 'LLM provider to use'
             },
             maxIterations: {

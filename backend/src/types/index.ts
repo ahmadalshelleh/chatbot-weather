@@ -1,4 +1,4 @@
-export type ModelProvider = 'openai' | 'anthropic' | 'deepseek';
+export type ModelProvider = 'openai' | 'deepseek';
 
 export interface Message {
   role: 'user' | 'assistant' | 'system' | 'tool';

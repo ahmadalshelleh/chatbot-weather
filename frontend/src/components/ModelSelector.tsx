@@ -5,7 +5,6 @@ import { ChevronDown } from 'lucide-react';
 
 const MODELS: Array<{ id: ModelProvider; name: string; logo: string; color: string }> = [
   { id: 'openai', name: 'GPT-3.5 Turbo', logo: '🤖', color: 'bg-green-500' },
-  { id: 'anthropic', name: 'Claude 3.5 Sonnet', logo: '🧠', color: 'bg-orange-500' },
   { id: 'deepseek', name: 'DeepSeek V3', logo: '🔮', color: 'bg-purple-500' }
 ];
 

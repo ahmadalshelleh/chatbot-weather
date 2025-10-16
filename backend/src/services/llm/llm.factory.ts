@@ -1,6 +1,5 @@
 import { ModelProvider } from '../../types';
 import { OpenAIService } from './openai.service';
-import { AnthropicService } from './anthropic.service';
 import { DeepSeekService } from './deepseek.service';
 
 export interface ILLMService {
@@ -12,8 +11,6 @@ export class LLMFactory {
     switch (provider) {
       case 'openai':
         return new OpenAIService();
-      case 'anthropic':
-        return new AnthropicService();
       case 'deepseek':
         return new DeepSeekService();
       default:

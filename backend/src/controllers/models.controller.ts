@@ -25,9 +25,6 @@ export class ModelsController {
    *                 - id: openai
    *                   name: GPT-3.5 Turbo
    *                   provider: OpenAI
-   *                 - id: anthropic
-   *                   name: Claude 3.5 Sonnet
-   *                   provider: Anthropic
    *                 - id: deepseek
    *                   name: DeepSeek V3
    *                   provider: DeepSeek
@@ -36,7 +33,6 @@ export class ModelsController {
     res.json({
       models: [
         { id: 'openai', name: 'GPT-3.5 Turbo', provider: 'OpenAI' },
-        { id: 'anthropic', name: 'Claude 3.5 Sonnet', provider: 'Anthropic' },
         { id: 'deepseek', name: 'DeepSeek V3', provider: 'DeepSeek' }
       ]
     });
