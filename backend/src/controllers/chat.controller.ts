@@ -1,12 +1,15 @@
 import { Request, Response } from 'express';
 import { ChatService } from '../services/chat.service';
+import { OrchestratorService } from '../orchestrator/orchestrator.service';
 import { ChatRequest } from '../types';
 
 export class ChatController {
   private chatService: ChatService;
+  private orchestrator: OrchestratorService;
 
   constructor() {
     this.chatService = new ChatService();
+    this.orchestrator = new OrchestratorService();
   }
 
   /**
@@ -58,15 +61,14 @@ export class ChatController {
    */
   async chat(req: Request, res: Response): Promise<void> {
     try {
-      const { messages, model, maxIterations = 5 }: ChatRequest = req.body;
+      const { messages, maxIterations = 5 }: ChatRequest = req.body;
 
       // Session ID is already attached by session middleware
       const sessionId = req.sessionId;
 
-      // Process chat via service
-      const response = await this.chatService.processChat(
+      // Process chat via orchestrator (intelligent routing)
+      const response = await this.orchestrator.processChat(
         messages,
-        model,
         sessionId,
         maxIterations
       );
@@ -150,7 +152,7 @@ export class ChatController {
    */
   async chatStream(req: Request, res: Response): Promise<void> {
     try {
-      const { messages, model, maxIterations = 5 }: ChatRequest = req.body;
+      const { messages, maxIterations = 5 }: ChatRequest = req.body;
       const sessionId = req.sessionId;
 
       // Set headers for Server-Sent Events
@@ -159,10 +161,9 @@ export class ChatController {
       res.setHeader('Connection', 'keep-alive');
       res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
 
-      // Process chat with streaming
-      const stream = this.chatService.processChatStream(
+      // Process chat with streaming via orchestrator
+      const stream = this.orchestrator.processChatStream(
         messages,
-        model,
         sessionId,
         maxIterations
       );

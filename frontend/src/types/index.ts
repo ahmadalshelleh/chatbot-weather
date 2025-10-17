@@ -6,6 +6,8 @@ export interface Message {
   id: string;
   timestamp: Date;
   toolCalls?: ToolCall[];
+  modelDisplayName?: string;
+  fallbackUsed?: boolean;
 }
 
 export interface ToolCall {
@@ -25,6 +27,9 @@ export interface ChatResponse {
   response: string;
   toolCallsMade: ToolCall[];
   modelUsed: ModelProvider;
+  modelDisplayName?: string;
+  fallbackUsed?: boolean;
+  routingReasoning?: string;
 }
 
 export interface Model {

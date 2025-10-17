@@ -36,6 +36,9 @@ export interface ChatResponse {
   response: string;
   toolCallsMade: ToolCall[];
   modelUsed: ModelProvider;
+  modelDisplayName?: string;
+  fallbackUsed?: boolean;
+  routingReasoning?: string;
 }
 
 export interface LLMResponse {
