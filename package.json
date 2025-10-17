@@ -1,0 +1,27 @@
+{
+  "name": "chatbot-project",
+  "version": "1.0.0",
+  "description": "Multi-LLM Weather Chatbot with intelligent routing",
+  "scripts": {
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "install:all": "npm run install:backend && npm run install:frontend",
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend && npm install",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "start": "pm2 start ecosystem.config.js",
+    "stop": "pm2 stop all",
+    "restart": "pm2 restart all",
+    "logs": "pm2 logs"
+  },
+  "keywords": [
+    "chatbot",
+    "weather",
+    "llm",
+    "orchestrator"
+  ],
+  "author": "",
+  "license": "ISC"
+}
