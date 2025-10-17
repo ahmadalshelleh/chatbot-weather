@@ -104,4 +104,26 @@ router.post('/chat/stream', sessionMiddleware, ChatValidation.validateChatReques
  */
 router.get('/chat/history/:sessionId', ChatValidation.validateSessionId, (req, res) => chatController.getHistory(req, res));
 
+/**
+ * @swagger
+ * /api/session/{sessionId}/deactivate:
+ *   post:
+ *     summary: Deactivate a session
+ *     description: Mark a session as inactive when user starts a new session
+ *     tags: [Session]
+ *     parameters:
+ *       - in: path
+ *         name: sessionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The session ID to deactivate
+ *     responses:
+ *       200:
+ *         description: Session deactivated successfully
+ *       500:
+ *         description: Server error
+ */
+router.post('/session/:sessionId/deactivate', ChatValidation.validateSessionId, (req, res) => chatController.deactivateSession(req, res));
+
 export default router;

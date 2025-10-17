@@ -17,7 +17,8 @@ export const chatApi = {
   },
 
   sendMessageStream: async (
-    request: ChatRequest,
+    message: string,
+    sessionId: string,
     onChunk: (chunk: string) => void,
     onTool: (tool: { name: string; arguments: any }) => void,
     onRouting: (routing: { modelDisplayName: string; fallbackUsed?: boolean }) => void,
@@ -29,8 +30,9 @@ export const chatApi = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-Session-ID': sessionId,
         },
-        body: JSON.stringify(request),
+        body: JSON.stringify({ message }),
       });
 
       if (!response.ok) {

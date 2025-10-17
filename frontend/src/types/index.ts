@@ -16,11 +16,7 @@ export interface ToolCall {
 }
 
 export interface ChatRequest {
-  messages: Array<{
-    role: string;
-    content: string;
-  }>;
-  model: ModelProvider;
+  message: string; // Now single message string
 }
 
 export interface ChatResponse {

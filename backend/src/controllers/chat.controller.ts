@@ -1,15 +1,18 @@
 import { Request, Response } from 'express';
 import { ChatService } from '../services/chat.service';
 import { OrchestratorService } from '../orchestrator/orchestrator.service';
+import { SessionRepository } from '../repositories/session.repository';
 import { ChatRequest } from '../types';
 
 export class ChatController {
   private chatService: ChatService;
   private orchestrator: OrchestratorService;
+  private sessionRepository: SessionRepository;
 
   constructor() {
     this.chatService = new ChatService();
     this.orchestrator = new OrchestratorService();
+    this.sessionRepository = new SessionRepository();
   }
 
   /**
@@ -61,14 +64,19 @@ export class ChatController {
    */
   async chat(req: Request, res: Response): Promise<void> {
     try {
-      const { messages, maxIterations = 5 }: ChatRequest = req.body;
+      const { message, maxIterations = 5 }: ChatRequest = req.body;
+
+      if (!message || typeof message !== 'string') {
+        res.status(400).json({ error: 'Message is required and must be a string' });
+        return;
+      }
 
       // Session ID is already attached by session middleware
       const sessionId = req.sessionId;
 
       // Process chat via orchestrator (intelligent routing)
       const response = await this.orchestrator.processChat(
-        messages,
+        message,
         sessionId,
         maxIterations
       );
@@ -152,8 +160,13 @@ export class ChatController {
    */
   async chatStream(req: Request, res: Response): Promise<void> {
     try {
-      const { messages, maxIterations = 5 }: ChatRequest = req.body;
+      const { message, maxIterations = 5 }: ChatRequest = req.body;
       const sessionId = req.sessionId;
+
+      if (!message || typeof message !== 'string') {
+        res.status(400).json({ error: 'Message is required and must be a string' });
+        return;
+      }
 
       // Set headers for Server-Sent Events
       res.setHeader('Content-Type', 'text/event-stream');
@@ -163,7 +176,7 @@ export class ChatController {
 
       // Process chat with streaming via orchestrator
       const stream = this.orchestrator.processChatStream(
-        messages,
+        message,
         sessionId,
         maxIterations
       );
@@ -180,6 +193,21 @@ export class ChatController {
       console.error('Chat stream controller error:', error);
       res.write(`data: ${JSON.stringify({ type: 'error', data: error.message })}\n\n`);
       res.end();
+    }
+  }
+
+  /**
+   * Deactivate a session
+   */
+  async deactivateSession(req: Request, res: Response): Promise<void> {
+    try {
+      const { sessionId } = req.params;
+
+      await this.sessionRepository.deactivateSession(sessionId);
+      res.json({ success: true, message: 'Session deactivated' });
+    } catch (error: any) {
+      console.error('Deactivate session error:', error);
+      res.status(500).json({ error: error.message });
     }
   }
 }

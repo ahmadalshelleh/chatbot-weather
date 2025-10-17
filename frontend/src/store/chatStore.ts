@@ -12,7 +12,7 @@ interface ChatState {
   // Actions
   setModel: (model: ModelProvider) => void;
   sendMessage: (content: string) => Promise<void>;
-  clearMessages: () => void;
+  newSession: () => void;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -20,14 +20,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
   currentModel: 'openai',
   isLoading: false,
   error: null,
-  sessionId: generateSessionId(),
+  sessionId: generateSessionId(), // New session on every mount/refresh
 
   setModel: (model) => {
     set({ currentModel: model });
   },
 
   sendMessage: async (content: string) => {
-    const { messages, currentModel } = get();
+    const { messages, sessionId } = get();
 
     // Add user message
     const userMessage: Message = {
@@ -53,23 +53,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }));
 
     try {
-      // Prepare request
-      const requestMessages = [...messages, userMessage].map(m => ({
-        role: m.role,
-        content: m.content
-      }));
-
       let streamedContent = '';
       let toolCalls: any[] = [];
       let modelDisplayName = '';
       let fallbackUsed = false;
 
-      // Call streaming API
+      // Call streaming API with only the new message
       await chatApi.sendMessageStream(
-        {
-          messages: requestMessages,
-          model: currentModel
-        },
+        content, // Send only the new message string
+        sessionId, // Send session ID
         // onChunk - append content as it streams
         (chunk: string) => {
           streamedContent += chunk;
@@ -131,14 +123,24 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  clearMessages: () => {
-    set({ messages: [], error: null });
+  newSession: () => {
+    const { sessionId: oldSessionId } = get();
+
+    // Optionally deactivate old session in backend (fire and forget)
+    if (oldSessionId) {
+      fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/session/${oldSessionId}/deactivate`, {
+        method: 'POST'
+      }).catch(err => console.error('Failed to deactivate session:', err));
+    }
+
+    // Generate new session ID and clear messages
+    set({ messages: [], error: null, sessionId: generateSessionId() });
   }
 }));
 
 // Helper functions
 function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
 function generateSessionId(): string {

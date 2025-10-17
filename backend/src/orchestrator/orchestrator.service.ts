@@ -1,4 +1,5 @@
 import { ChatRepository } from '../repositories/chat.repository';
+import { SessionRepository } from '../repositories/session.repository';
 import { LLMFactory } from '../services/llm/llm.factory';
 import { executeTool, TOOLS } from '../services/tools.service';
 import { Message, ModelProvider, LLMResponse } from '../types';
@@ -7,24 +8,43 @@ import { OrchestratorResponse, ModelExecutionResult } from './routing.types';
 
 export class OrchestratorService {
   private chatRepository: ChatRepository;
+  private sessionRepository: SessionRepository;
   private router: RouterService;
 
   constructor() {
     this.chatRepository = new ChatRepository();
+    this.sessionRepository = new SessionRepository();
     this.router = new RouterService();
   }
 
   /**
    * Process chat with intelligent routing and fallback
+   * Now accepts a single user message and loads history from database
    */
   async processChat(
-    messages: Message[],
+    userMessage: string,
     sessionId: string,
     maxIterations: number = 5
   ): Promise<OrchestratorResponse> {
+    // Load conversation history from database
+    const history = await this.sessionRepository.getSessionHistory(sessionId);
+
+    // Create user message object
+    const newUserMessage: Message = {
+      role: 'user',
+      content: userMessage,
+      timestamp: new Date()
+    };
+
+    // Save user message to session
+    await this.sessionRepository.appendMessage(sessionId, newUserMessage);
+
+    // Combine history with new message
+    const messages = [...history, newUserMessage];
+
     // Step 1: Route the request
     const routingDecision = await this.router.routeRequest({
-      userMessage: messages[messages.length - 1].content || '',
+      userMessage: userMessage,
       conversationHistory: messages.slice(-5).map(m => ({
         role: m.role,
         content: m.content || ''
@@ -93,12 +113,23 @@ export class OrchestratorService {
 
         // If no tool calls, save and return final response
         if (response.toolCalls.length === 0) {
+          // Save to legacy chat repository (for analytics)
           await this.chatRepository.create({
             sessionId,
             model: model,
             messages: conversationMessages,
             toolCallsMade
           });
+
+          // Save assistant message to session
+          const assistantMessage: Message = {
+            role: 'assistant',
+            content: response.content || 'No response generated',
+            timestamp: new Date(),
+            modelUsed: model,
+            modelDisplayName: this.router.getModelDisplayName(model)
+          };
+          await this.sessionRepository.appendMessage(sessionId, assistantMessage);
 
           return {
             success: true,
@@ -170,15 +201,32 @@ export class OrchestratorService {
 
   /**
    * Process chat with streaming and intelligent routing
+   * Now accepts a single user message and loads history from database
    */
   async *processChatStream(
-    messages: Message[],
+    userMessage: string,
     sessionId: string,
     maxIterations: number = 5
   ): AsyncGenerator<{ type: 'content' | 'tool' | 'done' | 'routing', data: any }, void, unknown> {
+    // Load conversation history from database
+    const history = await this.sessionRepository.getSessionHistory(sessionId);
+
+    // Create user message object
+    const newUserMessage: Message = {
+      role: 'user',
+      content: userMessage,
+      timestamp: new Date()
+    };
+
+    // Save user message to session
+    await this.sessionRepository.appendMessage(sessionId, newUserMessage);
+
+    // Combine history with new message
+    const messages = [...history, newUserMessage];
+
     // Step 1: Route the request
     const routingDecision = await this.router.routeRequest({
-      userMessage: messages[messages.length - 1].content || '',
+      userMessage: userMessage,
       conversationHistory: messages.slice(-5).map(m => ({
         role: m.role,
         content: m.content || ''
@@ -261,12 +309,24 @@ export class OrchestratorService {
 
       // If no tool calls, we're done
       if (finalResponse.toolCalls.length === 0) {
+        // Save to legacy chat repository (for analytics)
         await this.chatRepository.create({
           sessionId,
           model: model,
           messages: conversationMessages,
           toolCallsMade
         });
+
+        // Save assistant message to session
+        const assistantMessage: Message = {
+          role: 'assistant',
+          content: finalResponse.content || 'No response generated',
+          timestamp: new Date(),
+          modelUsed: model,
+          modelDisplayName: this.router.getModelDisplayName(model),
+          fallbackUsed
+        };
+        await this.sessionRepository.appendMessage(sessionId, assistantMessage);
 
         yield {
           type: 'done',
