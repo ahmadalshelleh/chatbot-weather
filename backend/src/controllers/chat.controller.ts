@@ -126,4 +126,59 @@ export class ChatController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  /**
+   * @swagger
+   * /api/chat/stream:
+   *   post:
+   *     summary: Send a message to the chatbot with streaming response
+   *     description: Process a chat message with streaming and tool calling support
+   *     tags: [Chat]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/ChatRequest'
+   *     responses:
+   *       200:
+   *         description: Streaming response
+   *         content:
+   *           text/event-stream:
+   *             schema:
+   *               type: string
+   */
+  async chatStream(req: Request, res: Response): Promise<void> {
+    try {
+      const { messages, model, maxIterations = 5 }: ChatRequest = req.body;
+      const sessionId = req.sessionId;
+
+      // Set headers for Server-Sent Events
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
+
+      // Process chat with streaming
+      const stream = this.chatService.processChatStream(
+        messages,
+        model,
+        sessionId,
+        maxIterations
+      );
+
+      for await (const event of stream) {
+        // Send SSE event
+        res.write(`data: ${JSON.stringify(event)}\n\n`);
+      }
+
+      // End the stream
+      res.write('data: [DONE]\n\n');
+      res.end();
+    } catch (error: any) {
+      console.error('Chat stream controller error:', error);
+      res.write(`data: ${JSON.stringify({ type: 'error', data: error.message })}\n\n`);
+      res.end();
+    }
+  }
 }

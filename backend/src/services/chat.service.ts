@@ -1,7 +1,7 @@
 import { ChatRepository } from '../repositories/chat.repository';
 import { LLMFactory } from './llm/llm.factory';
 import { executeTool, TOOLS } from './tools.service';
-import { Message, ModelProvider, ChatResponse } from '../types';
+import { Message, ModelProvider, ChatResponse, LLMResponse } from '../types';
 
 export class ChatService {
   private chatRepository: ChatRepository;
@@ -97,5 +97,112 @@ export class ChatService {
    */
   async getTotalChats() {
     return await this.chatRepository.count();
+  }
+
+  /**
+   * Process a chat request with streaming and tool calling
+   */
+  async *processChatStream(
+    messages: Message[],
+    model: ModelProvider,
+    sessionId: string,
+    maxIterations: number = 5
+  ): AsyncGenerator<{ type: 'content' | 'tool' | 'done', data: any }, void, unknown> {
+    const llmService = LLMFactory.create(model);
+    const conversationMessages: Message[] = [...messages];
+    const toolCallsMade: any[] = [];
+
+    // Agent loop for tool calling
+    for (let i = 0; i < maxIterations; i++) {
+      const streamGen = llmService.chatStream(conversationMessages, TOOLS);
+      let finalResponse: LLMResponse | null = null;
+
+      // Stream content chunks and collect final response
+      while (true) {
+        const result = await streamGen.next();
+
+        if (result.done) {
+          // Generator completed - return value contains the LLMResponse
+          finalResponse = result.value as LLMResponse;
+          break;
+        } else {
+          // Yielded value is a content chunk
+          yield { type: 'content', data: result.value };
+        }
+      }
+
+      if (!finalResponse) break;
+
+      // If no tool calls, we're done
+      if (finalResponse.toolCalls.length === 0) {
+        // Save to database
+        await this.chatRepository.create({
+          sessionId,
+          model: model,
+          messages: conversationMessages,
+          toolCallsMade
+        });
+
+        yield {
+          type: 'done',
+          data: {
+            response: finalResponse.content || 'No response generated',
+            toolCallsMade,
+            modelUsed: model
+          }
+        };
+        return;
+      }
+
+      // Add assistant message with tool calls
+      conversationMessages.push({
+        role: 'assistant',
+        content: null,
+        toolCalls: finalResponse.toolCalls
+      });
+
+      // Execute each tool call
+      for (const toolCall of finalResponse.toolCalls) {
+        toolCallsMade.push({
+          name: toolCall.name,
+          arguments: toolCall.arguments,
+          timestamp: new Date()
+        });
+
+        yield {
+          type: 'tool',
+          data: {
+            name: toolCall.name,
+            arguments: toolCall.arguments
+          }
+        };
+
+        const toolResult = await executeTool(toolCall.name, toolCall.arguments);
+
+        // Add tool result
+        conversationMessages.push({
+          role: 'tool',
+          toolCallId: toolCall.id,
+          content: JSON.stringify(toolResult)
+        });
+      }
+    }
+
+    // Max iterations reached
+    await this.chatRepository.create({
+      sessionId,
+      model: model,
+      messages: conversationMessages,
+      toolCallsMade
+    });
+
+    yield {
+      type: 'done',
+      data: {
+        response: 'Max iterations reached',
+        toolCallsMade,
+        modelUsed: model
+      }
+    };
   }
 }

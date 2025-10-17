@@ -39,6 +39,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     set({ messages: [...messages, userMessage], isLoading: true, error: null });
 
+    // Create a placeholder assistant message for streaming
+    const assistantId = generateId();
+    const assistantMessage: Message = {
+      id: assistantId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date()
+    };
+
+    set(state => ({
+      messages: [...state.messages, assistantMessage]
+    }));
+
     try {
       // Prepare request
       const requestMessages = [...messages, userMessage].map(m => ({
@@ -46,25 +59,51 @@ export const useChatStore = create<ChatState>((set, get) => ({
         content: m.content
       }));
 
-      // Call API
-      const response = await chatApi.sendMessage({
-        messages: requestMessages,
-        model: currentModel
-      });
+      let streamedContent = '';
+      let toolCalls: any[] = [];
 
-      // Add assistant message
-      const assistantMessage: Message = {
-        id: generateId(),
-        role: 'assistant',
-        content: response.response,
-        timestamp: new Date(),
-        toolCalls: response.toolCallsMade
-      };
-
-      set(state => ({
-        messages: [...state.messages, assistantMessage],
-        isLoading: false
-      }));
+      // Call streaming API
+      await chatApi.sendMessageStream(
+        {
+          messages: requestMessages,
+          model: currentModel
+        },
+        // onChunk - append content as it streams
+        (chunk: string) => {
+          streamedContent += chunk;
+          set(state => ({
+            messages: state.messages.map(msg =>
+              msg.id === assistantId
+                ? { ...msg, content: streamedContent }
+                : msg
+            )
+          }));
+        },
+        // onTool - tool is being called
+        (tool: { name: string; arguments: any }) => {
+          console.log('Tool called:', tool);
+        },
+        // onDone - streaming complete
+        (data) => {
+          toolCalls = data.toolCallsMade || [];
+          set(state => ({
+            messages: state.messages.map(msg =>
+              msg.id === assistantId
+                ? { ...msg, content: streamedContent || data.response, toolCalls }
+                : msg
+            ),
+            isLoading: false
+          }));
+        },
+        // onError
+        (error: string) => {
+          console.error('Streaming error:', error);
+          set({
+            error,
+            isLoading: false
+          });
+        }
+      );
 
     } catch (error: any) {
       console.error('Chat error:', error);

@@ -57,6 +57,11 @@ const chatController = new ChatController();
 router.post('/chat', sessionMiddleware, ChatValidation.validateChatRequest, (req, res) => chatController.chat(req, res));
 
 /**
+ * Streaming chat endpoint
+ */
+router.post('/chat/stream', sessionMiddleware, ChatValidation.validateChatRequest, (req, res) => chatController.chatStream(req, res));
+
+/**
  * @swagger
  * /api/chat/history/{sessionId}:
  *   get:
