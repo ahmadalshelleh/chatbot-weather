@@ -1,0 +1,320 @@
+{
+  "version": "1.0.0",
+  "description": "Evaluation test cases for multi-LLM weather chatbot",
+  "testCases": [
+    {
+      "id": "routing-weather-001",
+      "category": "routing",
+      "description": "Simple weather query should route to DeepSeek",
+      "input": "What's the weather in Paris?",
+      "expectedModel": "deepseek",
+      "expectedTools": ["get_current_weather"],
+      "expectedKeywords": ["paris", "temperature", "weather"],
+      "maxLatencyMs": 5000,
+      "metadata": {}
+    },
+    {
+      "id": "routing-weather-002",
+      "category": "routing",
+      "description": "Temperature query should route to DeepSeek",
+      "input": "Tell me the temperature in Tokyo",
+      "expectedModel": "deepseek",
+      "expectedTools": ["get_current_weather"],
+      "expectedKeywords": ["tokyo", "temperature"],
+      "maxLatencyMs": 5000,
+      "metadata": {}
+    },
+    {
+      "id": "routing-weather-003",
+      "category": "routing",
+      "description": "Weather comparison should route to DeepSeek",
+      "input": "Compare the weather in London and New York",
+      "expectedModel": "deepseek",
+      "expectedTools": ["get_current_weather"],
+      "expectedKeywords": ["london", "new york"],
+      "maxLatencyMs": 6000,
+      "metadata": {}
+    },
+    {
+      "id": "routing-weather-004",
+      "category": "routing",
+      "description": "Forecast query should route to DeepSeek",
+      "input": "Will it rain in Berlin tomorrow?",
+      "expectedModel": "deepseek",
+      "expectedTools": ["get_current_weather"],
+      "expectedKeywords": ["berlin", "rain"],
+      "maxLatencyMs": 5000,
+      "metadata": {}
+    },
+    {
+      "id": "routing-casual-001",
+      "category": "routing",
+      "description": "Greeting should route to OpenAI",
+      "input": "Hello, how are you?",
+      "expectedModel": "openai",
+      "expectedTools": [],
+      "expectedKeywords": ["hello", "fine", "good"],
+      "maxLatencyMs": 3000,
+      "metadata": {}
+    },
+    {
+      "id": "routing-casual-002",
+      "category": "routing",
+      "description": "Casual question should route to OpenAI",
+      "input": "Tell me a joke",
+      "expectedModel": "openai",
+      "expectedTools": [],
+      "expectedKeywords": [],
+      "maxLatencyMs": 3000,
+      "metadata": {}
+    },
+    {
+      "id": "routing-casual-003",
+      "category": "routing",
+      "description": "General conversation should route to OpenAI",
+      "input": "What's your favorite color?",
+      "expectedModel": "openai",
+      "expectedTools": [],
+      "expectedKeywords": [],
+      "maxLatencyMs": 3000,
+      "metadata": {}
+    },
+    {
+      "id": "routing-casual-004",
+      "category": "routing",
+      "description": "Opinion question should route to OpenAI",
+      "input": "Do you prefer cats or dogs?",
+      "expectedModel": "openai",
+      "expectedTools": [],
+      "expectedKeywords": [],
+      "maxLatencyMs": 3000,
+      "metadata": {}
+    },
+    {
+      "id": "quality-weather-001",
+      "category": "quality",
+      "description": "Weather response should include temperature",
+      "input": "What's the current weather in Madrid?",
+      "expectedModel": "deepseek",
+      "expectedTools": ["get_current_weather"],
+      "expectedKeywords": ["madrid", "temperature", "°"],
+      "maxLatencyMs": 5000,
+      "metadata": {}
+    },
+    {
+      "id": "quality-weather-002",
+      "category": "quality",
+      "description": "Weather response should include conditions",
+      "input": "How's the weather in Sydney?",
+      "expectedModel": "deepseek",
+      "expectedTools": ["get_current_weather"],
+      "expectedKeywords": ["sydney", "weather"],
+      "maxLatencyMs": 5000,
+      "metadata": {}
+    },
+    {
+      "id": "quality-weather-003",
+      "category": "quality",
+      "description": "Multi-city comparison should mention both cities",
+      "input": "Is it warmer in Miami or Seattle?",
+      "expectedModel": "deepseek",
+      "expectedTools": ["get_current_weather"],
+      "expectedKeywords": ["miami", "seattle", "temperature"],
+      "maxLatencyMs": 6000,
+      "metadata": {}
+    },
+    {
+      "id": "quality-casual-001",
+      "category": "quality",
+      "description": "Greeting response should be friendly",
+      "input": "Hi there!",
+      "expectedModel": "openai",
+      "expectedTools": [],
+      "expectedKeywords": ["hello", "hi", "help"],
+      "maxLatencyMs": 3000,
+      "metadata": {}
+    },
+    {
+      "id": "quality-casual-002",
+      "category": "quality",
+      "description": "Response should be conversational",
+      "input": "How's your day going?",
+      "expectedModel": "openai",
+      "expectedTools": [],
+      "expectedKeywords": [],
+      "maxLatencyMs": 3000,
+      "metadata": {}
+    },
+    {
+      "id": "quality-mixed-001",
+      "category": "quality",
+      "description": "Complex query with weather and opinion",
+      "input": "What's the weather in Paris and do you think it's a good day for a picnic?",
+      "expectedModel": "deepseek",
+      "expectedTools": ["get_current_weather"],
+      "expectedKeywords": ["paris", "temperature", "picnic"],
+      "maxLatencyMs": 5000,
+      "metadata": {}
+    },
+    {
+      "id": "quality-mixed-002",
+      "category": "quality",
+      "description": "Weather with context",
+      "input": "I'm visiting Rome tomorrow, should I bring an umbrella?",
+      "expectedModel": "deepseek",
+      "expectedTools": ["get_current_weather"],
+      "expectedKeywords": ["rome", "rain", "umbrella"],
+      "maxLatencyMs": 5000,
+      "metadata": {}
+    },
+    {
+      "id": "quality-edge-001",
+      "category": "quality",
+      "description": "Handle unknown city gracefully",
+      "input": "What's the weather in Atlantis?",
+      "expectedModel": "deepseek",
+      "expectedTools": ["get_current_weather"],
+      "expectedKeywords": [],
+      "maxLatencyMs": 5000,
+      "metadata": {}
+    },
+    {
+      "id": "tools-weather-001",
+      "category": "tools",
+      "description": "Should call weather tool with correct city",
+      "input": "Weather in Chicago",
+      "expectedModel": "deepseek",
+      "expectedTools": ["get_current_weather"],
+      "expectedKeywords": ["chicago"],
+      "maxLatencyMs": 5000,
+      "metadata": {}
+    },
+    {
+      "id": "tools-weather-002",
+      "category": "tools",
+      "description": "Should call weather tool multiple times for comparison",
+      "input": "Compare weather in Boston and Austin",
+      "expectedModel": "deepseek",
+      "expectedTools": ["get_current_weather"],
+      "expectedKeywords": ["boston", "austin"],
+      "maxLatencyMs": 6000,
+      "metadata": {}
+    },
+    {
+      "id": "tools-weather-003",
+      "category": "tools",
+      "description": "Should call weather tool for specific data",
+      "input": "What's the humidity in Vancouver?",
+      "expectedModel": "deepseek",
+      "expectedTools": ["get_current_weather"],
+      "expectedKeywords": ["vancouver", "humidity"],
+      "maxLatencyMs": 5000,
+      "metadata": {}
+    },
+    {
+      "id": "tools-weather-004",
+      "category": "tools",
+      "description": "Should not call tools for non-weather queries",
+      "input": "Tell me about the Eiffel Tower",
+      "expectedModel": "openai",
+      "expectedTools": [],
+      "expectedKeywords": ["eiffel", "tower"],
+      "maxLatencyMs": 3000,
+      "metadata": {}
+    },
+    {
+      "id": "tools-weather-005",
+      "category": "tools",
+      "description": "Should handle multiple weather queries",
+      "input": "What's the weather in Dubai, Mumbai, and Singapore?",
+      "expectedModel": "deepseek",
+      "expectedTools": ["get_current_weather"],
+      "expectedKeywords": ["dubai", "mumbai", "singapore"],
+      "maxLatencyMs": 7000,
+      "metadata": {}
+    },
+    {
+      "id": "tools-weather-006",
+      "category": "tools",
+      "description": "Should extract city from context",
+      "input": "I'm in San Francisco, what should I wear today?",
+      "expectedModel": "deepseek",
+      "expectedTools": ["get_current_weather"],
+      "expectedKeywords": ["san francisco", "weather"],
+      "maxLatencyMs": 5000,
+      "metadata": {}
+    },
+    {
+      "id": "performance-speed-001",
+      "category": "performance",
+      "description": "Quick response for simple query",
+      "input": "Hi",
+      "expectedModel": "openai",
+      "expectedTools": [],
+      "expectedKeywords": [],
+      "maxLatencyMs": 2000,
+      "metadata": {}
+    },
+    {
+      "id": "performance-speed-002",
+      "category": "performance",
+      "description": "Weather query should complete in reasonable time",
+      "input": "Weather in Amsterdam",
+      "expectedModel": "deepseek",
+      "expectedTools": ["get_current_weather"],
+      "expectedKeywords": ["amsterdam"],
+      "maxLatencyMs": 5000,
+      "metadata": {}
+    },
+    {
+      "id": "performance-speed-003",
+      "category": "performance",
+      "description": "Multiple tool calls should still be fast",
+      "input": "Compare weather in Moscow and Cairo",
+      "expectedModel": "deepseek",
+      "expectedTools": ["get_current_weather"],
+      "expectedKeywords": ["moscow", "cairo"],
+      "maxLatencyMs": 6000,
+      "metadata": {}
+    },
+    {
+      "id": "fallback-error-001",
+      "category": "fallback",
+      "description": "System should handle errors gracefully",
+      "input": "What's the weather?",
+      "expectedModel": "deepseek",
+      "expectedTools": ["get_current_weather"],
+      "expectedKeywords": [],
+      "maxLatencyMs": 6000,
+      "metadata": {
+        "note": "Ambiguous location may cause tool error"
+      }
+    },
+    {
+      "id": "fallback-recovery-001",
+      "category": "fallback",
+      "description": "Should provide response even if tool fails",
+      "input": "Temperature in XYZ123",
+      "expectedModel": "deepseek",
+      "expectedTools": ["get_current_weather"],
+      "expectedKeywords": [],
+      "maxLatencyMs": 6000,
+      "metadata": {
+        "note": "Invalid city should trigger graceful handling"
+      }
+    },
+    {
+      "id": "fallback-recovery-002",
+      "category": "fallback",
+      "description": "Fallback should activate if primary fails",
+      "input": "Weather forecast for next week in Melbourne",
+      "expectedModel": "deepseek",
+      "expectedTools": ["get_current_weather"],
+      "expectedKeywords": ["melbourne"],
+      "maxLatencyMs": 6000,
+      "metadata": {
+        "note": "Future forecast not supported, should handle gracefully"
+      }
+    }
+  ]
+}

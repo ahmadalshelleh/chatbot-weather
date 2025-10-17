@@ -1,15 +1,16 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
 import { connectDatabase } from './config/database';
 import { swaggerSpec, swaggerUiOptions } from './config/swagger';
 import chatRoutes from './routes/chat.routes';
 import modelsRoutes from './routes/models.routes';
 import healthRoutes from './routes/health.routes';
+import evalRoutes from './routes/eval.routes';
 import { errorHandler } from './middleware/errorHandler';
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -31,6 +32,7 @@ app.get('/api-docs', swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 // Routes
 app.use('/api', chatRoutes);
 app.use('/api', modelsRoutes);
+app.use('/api/eval', evalRoutes);
 app.use('/', healthRoutes);
 
 // Error handler

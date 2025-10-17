@@ -17,7 +17,18 @@ export class EvalRepository {
     errors: string[];
     metadata: Record<string, any>;
   }): Promise<IEvalResult> {
-    const evalResult = new EvalResult(data);
+    const evalResult = new EvalResult({
+      testId: data.testId,
+      modelProvider: data.model,  // Map to schema field name
+      passed: data.passed,
+      score: data.score,
+      latencyMs: data.latencyMs,
+      toolsCalled: data.toolsCalled,
+      toolCallCount: data.toolCallCount,
+      response: data.response,
+      errorMessages: data.errors,  // Map to schema field name
+      metadata: data.metadata
+    });
     return await evalResult.save();
   }
 
