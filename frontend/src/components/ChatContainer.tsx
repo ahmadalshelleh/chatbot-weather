@@ -2,10 +2,9 @@ import React, { useRef, useEffect } from 'react';
 import { useChatStore } from '../store/chatStore';
 import { ChatMessage } from './ChatMessage';
 import { ThinkingIndicator } from './ThinkingIndicator';
-import { Trash2 } from 'lucide-react';
 
 export const ChatContainer: React.FC = () => {
-  const { messages, isLoading, error, clearMessages } = useChatStore();
+  const { messages, isLoading, error } = useChatStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom
@@ -46,17 +45,6 @@ export const ChatContainer: React.FC = () => {
         </div>
       ) : (
         <>
-          <div className="flex justify-end mb-4">
-            <button
-              onClick={clearMessages}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600
-                         hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-            >
-              <Trash2 size={16} />
-              Clear Chat
-            </button>
-          </div>
-
           {messages.map(message => (
             <ChatMessage key={message.id} message={message} />
           ))}

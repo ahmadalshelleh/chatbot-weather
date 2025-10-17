@@ -61,6 +61,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       let streamedContent = '';
       let toolCalls: any[] = [];
+      let modelDisplayName = '';
+      let fallbackUsed = false;
 
       // Call streaming API
       await chatApi.sendMessageStream(
@@ -83,13 +85,28 @@ export const useChatStore = create<ChatState>((set, get) => ({
         (tool: { name: string; arguments: any }) => {
           console.log('Tool called:', tool);
         },
+        // onRouting - routing decision received
+        (routing: { modelDisplayName: string; fallbackUsed?: boolean }) => {
+          console.log('Routing:', routing);
+          modelDisplayName = routing.modelDisplayName;
+          fallbackUsed = routing.fallbackUsed || false;
+        },
         // onDone - streaming complete
         (data) => {
           toolCalls = data.toolCallsMade || [];
+          modelDisplayName = data.modelDisplayName || modelDisplayName;
+          fallbackUsed = data.fallbackUsed || fallbackUsed;
+
           set(state => ({
             messages: state.messages.map(msg =>
               msg.id === assistantId
-                ? { ...msg, content: streamedContent || data.response, toolCalls }
+                ? {
+                    ...msg,
+                    content: streamedContent || data.response,
+                    toolCalls,
+                    modelDisplayName,
+                    fallbackUsed
+                  }
                 : msg
             ),
             isLoading: false

@@ -20,6 +20,7 @@ export const chatApi = {
     request: ChatRequest,
     onChunk: (chunk: string) => void,
     onTool: (tool: { name: string; arguments: any }) => void,
+    onRouting: (routing: { modelDisplayName: string; fallbackUsed?: boolean }) => void,
     onDone: (data: ChatResponse) => void,
     onError: (error: string) => void
   ): Promise<void> => {
@@ -68,6 +69,8 @@ export const chatApi = {
                 onChunk(event.data);
               } else if (event.type === 'tool') {
                 onTool(event.data);
+              } else if (event.type === 'routing') {
+                onRouting(event.data);
               } else if (event.type === 'done') {
                 onDone(event.data);
               } else if (event.type === 'error') {
