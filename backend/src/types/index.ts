@@ -5,6 +5,11 @@ export interface Message {
   content: string | null;
   toolCalls?: ToolCall[];
   toolCallId?: string;
+  name?: string;
+  timestamp?: Date;
+  modelUsed?: ModelProvider;
+  modelDisplayName?: string;
+  fallbackUsed?: boolean;
 }
 
 export interface ToolCall {
@@ -27,8 +32,7 @@ export interface Tool {
 }
 
 export interface ChatRequest {
-  messages: Message[];
-  model: ModelProvider;
+  message: string; // Now accepts single message string instead of array
   maxIterations?: number;
 }
 
