@@ -1,9 +1,10 @@
-import { ModelProvider } from '../../types';
+import { ModelProvider, LLMResponse } from '../../types';
 import { OpenAIService } from './openai.service';
 import { DeepSeekService } from './deepseek.service';
 
 export interface ILLMService {
   chat(messages: any[], tools: any[]): Promise<any>;
+  chatStream(messages: any[], tools: any[]): AsyncGenerator<string, LLMResponse, unknown>;
 }
 
 export class LLMFactory {
