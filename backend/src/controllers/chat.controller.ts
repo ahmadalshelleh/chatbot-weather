@@ -1,18 +1,30 @@
 import { Request, Response } from 'express';
 import { ChatService } from '../services/chat.service';
 import { OrchestratorService } from '../orchestrator/orchestrator.service';
+import { LangGraphOrchestrator } from '../orchestrator/langgraph.orchestrator';
 import { SessionRepository } from '../repositories/session.repository';
 import { ChatRequest } from '../types';
 
 export class ChatController {
   private chatService: ChatService;
-  private orchestrator: OrchestratorService;
+  private orchestrator: OrchestratorService | LangGraphOrchestrator;
   private sessionRepository: SessionRepository;
+  private useLangGraph: boolean;
 
   constructor() {
     this.chatService = new ChatService();
-    this.orchestrator = new OrchestratorService();
     this.sessionRepository = new SessionRepository();
+
+    // Use LangGraph if enabled via environment variable
+    this.useLangGraph = process.env.USE_LANGGRAPH === 'true';
+
+    if (this.useLangGraph) {
+      console.log('🔵 Using LangGraph Orchestrator');
+      this.orchestrator = new LangGraphOrchestrator();
+    } else {
+      console.log('🟢 Using Standard Orchestrator');
+      this.orchestrator = new OrchestratorService();
+    }
   }
 
   /**
