@@ -176,6 +176,8 @@ export class ChatController {
       res.setHeader('Connection', 'keep-alive');
       res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
 
+      console.log(`📡 Starting SSE stream for session: ${sessionId}`);
+
       // Process chat with streaming via orchestrator
       const stream = this.orchestrator.processChatStream(
         message,
@@ -183,10 +185,23 @@ export class ChatController {
         maxIterations
       );
 
+      let eventCount = 0;
+
       for await (const event of stream) {
+        eventCount++;
+        console.log(`📤 Sending SSE event #${eventCount}: ${event.type}`);
+
         // Send SSE event
-        res.write(`data: ${JSON.stringify(event)}\n\n`);
+        const sseData = `data: ${JSON.stringify(event)}\n\n`;
+        res.write(sseData);
+
+        // Flush immediately if available
+        if (typeof (res as any).flush === 'function') {
+          (res as any).flush();
+        }
       }
+
+      console.log(`✅ Stream complete. Sent ${eventCount} events`);
 
       // End the stream
       res.write('data: [DONE]\n\n');

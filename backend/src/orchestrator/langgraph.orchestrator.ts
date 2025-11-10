@@ -171,18 +171,26 @@ export class LangGraphOrchestrator {
   }
 
   /**
-   * Process chat with streaming using LangGraph's stream mode
+   * Process chat with streaming - simplified approach
+   * Since LangGraph nodes execute synchronously, we run the full graph
+   * and emit progress events at key milestones
    */
   async *processChatStream(
     userMessage: string,
     sessionId: string,
     maxIterations: number = 5
-  ): AsyncGenerator<{ type: 'content' | 'tool' | 'done' | 'routing' | 'node', data: any }, void, unknown> {
+  ): AsyncGenerator<{ type: 'content' | 'tool' | 'done' | 'routing' | 'progress', data: any }, void, unknown> {
     console.log('\n🚀 Starting LangGraph streaming orchestration...');
     console.log(`   Session: ${sessionId}`);
     console.log(`   Message: ${userMessage.substring(0, 50)}...`);
 
     try {
+      // Emit start event
+      yield {
+        type: 'progress',
+        data: { stage: 'starting', message: 'Initializing...' }
+      };
+
       // Initialize state
       const initialState: Partial<GraphStateType> = {
         userMessage,
@@ -194,101 +202,108 @@ export class LangGraphOrchestrator {
         fallbackUsed: false
       };
 
-      let routingEmitted = false;
-      let lastState: GraphStateType | null = null;
+      // Emit loading history
+      yield {
+        type: 'progress',
+        data: { stage: 'loading', message: 'Loading conversation history...' }
+      };
 
-      // Stream the graph execution with updates mode to track node transitions
-      const stream = await this.graph.stream(initialState, {
-        streamMode: 'updates' // Stream only updates/changes
+      // Use streamMode: 'values' to get full state at each step
+      const streamGenerator = await this.graph.stream(initialState, {
+        streamMode: 'values'
       });
 
-      let previousToolCallCount = 0;
+      let finalState: GraphStateType | null = null;
+      let routingEmitted = false;
+      let previousToolCount = 0;
 
-      for await (const update of stream) {
-        // update is an object with node name as key and state changes as value
-        const nodeName = Object.keys(update)[0];
-        const stateChanges = update[nodeName] as Partial<GraphStateType>;
+      for await (const state of streamGenerator) {
+        finalState = state as GraphStateType;
 
-        console.log(`📍 Node: ${nodeName}`);
+        console.log(`📊 Stream update - keys: ${Object.keys(state).join(', ')}`);
 
-        // Merge state changes
-        if (!lastState) {
-          lastState = { ...(initialState as any), ...(stateChanges as any) } as GraphStateType;
-        } else {
-          lastState = { ...(lastState as any), ...(stateChanges as any) } as GraphStateType;
-        }
+        // Emit routing once available
+        if (!routingEmitted && finalState.selectedModel) {
+          console.log(`🎯 Emitting routing: ${finalState.selectedModel}`);
 
-        // Emit node progress
-        yield {
-          type: 'node',
-          data: {
-            node: nodeName,
-            timestamp: new Date()
-          }
-        };
-
-        // Emit routing decision when available
-        if (!routingEmitted && stateChanges.selectedModel && stateChanges.routingReasoning) {
           yield {
             type: 'routing',
             data: {
-              model: stateChanges.selectedModel,
-              modelDisplayName: this.router.getModelDisplayName(stateChanges.selectedModel),
-              reasoning: stateChanges.routingReasoning,
-              confidence: stateChanges.routingConfidence || 0
+              model: finalState.selectedModel,
+              modelDisplayName: this.router.getModelDisplayName(finalState.selectedModel),
+              reasoning: finalState.routingReasoning || 'Model selected',
+              confidence: finalState.routingConfidence || 1.0
             }
           };
           routingEmitted = true;
+
+          yield {
+            type: 'progress',
+            data: {
+              stage: 'executing',
+              message: `Processing with ${this.router.getModelDisplayName(finalState.selectedModel)}...`
+            }
+          };
         }
 
-        // Emit tool calls when new ones are added
-        if (stateChanges.toolCallsMade && stateChanges.toolCallsMade.length > 0) {
-          const newToolCalls = stateChanges.toolCallsMade.slice(previousToolCallCount);
-          for (const toolCall of newToolCalls) {
+        // Emit new tool calls
+        if (finalState.toolCallsMade && finalState.toolCallsMade.length > previousToolCount) {
+          const newTools = finalState.toolCallsMade.slice(previousToolCount);
+
+          for (const tool of newTools) {
+            console.log(`🔧 Emitting tool: ${tool.name}`);
+
             yield {
               type: 'tool',
               data: {
-                name: toolCall.name,
-                arguments: toolCall.arguments
+                name: tool.name,
+                arguments: tool.arguments
               }
             };
+
+            yield {
+              type: 'progress',
+              data: { stage: 'tool', message: `Calling ${tool.name}...` }
+            };
           }
-          previousToolCallCount = stateChanges.toolCallsMade.length;
+
+          previousToolCount = finalState.toolCallsMade.length;
         }
 
-        // Emit final response when available
-        if (stateChanges.finalResponse) {
+        // Emit content when available
+        if (finalState.finalResponse) {
+          console.log(`✅ Emitting content`);
+
           yield {
             type: 'content',
-            data: stateChanges.finalResponse
+            data: finalState.finalResponse
           };
         }
       }
 
-      // Emit done event with final state
-      if (lastState) {
-        const modelUsed = lastState.selectedModel || 'openai';
+      // Emit final done event
+      if (finalState) {
+        const modelUsed = finalState.selectedModel || 'openai';
 
         console.log('\n✅ LangGraph streaming complete');
-        console.log(`   Model used: ${modelUsed}`);
-        console.log(`   Fallback used: ${lastState.fallbackUsed}`);
-        console.log(`   Tool calls: ${lastState.toolCallsMade.length}`);
+        console.log(`   Model: ${modelUsed}, Tools: ${finalState.toolCallsMade?.length || 0}`);
 
         yield {
           type: 'done',
           data: {
-            response: lastState.finalResponse || 'No response generated',
-            toolCallsMade: lastState.toolCallsMade,
+            response: finalState.finalResponse || 'No response generated',
+            toolCallsMade: finalState.toolCallsMade || [],
             modelUsed,
             modelDisplayName: this.router.getModelDisplayName(modelUsed),
-            fallbackUsed: lastState.fallbackUsed,
-            routingReasoning: lastState.routingReasoning
+            fallbackUsed: finalState.fallbackUsed || false,
+            routingReasoning: finalState.routingReasoning || ''
           }
         };
       }
 
     } catch (error: any) {
       console.error('❌ LangGraph streaming error:', error);
+      console.error(error.stack);
 
       yield {
         type: 'done',
