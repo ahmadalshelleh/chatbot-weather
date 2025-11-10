@@ -23,7 +23,8 @@ export const chatApi = {
     onTool: (tool: { name: string; arguments: any }) => void,
     onRouting: (routing: { modelDisplayName: string; fallbackUsed?: boolean }) => void,
     onDone: (data: ChatResponse) => void,
-    onError: (error: string) => void
+    onError: (error: string) => void,
+    onProgress?: (progress: { stage: string; message: string }) => void
   ): Promise<void> => {
     try {
       const response = await fetch(`${API_URL}/chat/stream`, {
@@ -73,6 +74,8 @@ export const chatApi = {
                 onTool(event.data);
               } else if (event.type === 'routing') {
                 onRouting(event.data);
+              } else if (event.type === 'progress') {
+                onProgress?.(event.data);
               } else if (event.type === 'done') {
                 onDone(event.data);
               } else if (event.type === 'error') {

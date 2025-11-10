@@ -64,7 +64,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         sessionId, // Send session ID
         // onChunk - append content as it streams
         (chunk: string) => {
-          streamedContent += chunk;
+          streamedContent = chunk; // Use the full content, not append
           set(state => ({
             messages: state.messages.map(msg =>
               msg.id === assistantId
@@ -75,16 +75,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
         },
         // onTool - tool is being called
         (tool: { name: string; arguments: any }) => {
-          console.log('Tool called:', tool);
+          console.log('🔧 Tool called:', tool);
         },
         // onRouting - routing decision received
         (routing: { modelDisplayName: string; fallbackUsed?: boolean }) => {
-          console.log('Routing:', routing);
+          console.log('🎯 Routing:', routing);
           modelDisplayName = routing.modelDisplayName;
           fallbackUsed = routing.fallbackUsed || false;
         },
         // onDone - streaming complete
         (data) => {
+          console.log('✅ Streaming done:', data);
           toolCalls = data.toolCallsMade || [];
           modelDisplayName = data.modelDisplayName || modelDisplayName;
           fallbackUsed = data.fallbackUsed || fallbackUsed;
@@ -106,11 +107,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
         },
         // onError
         (error: string) => {
-          console.error('Streaming error:', error);
+          console.error('❌ Streaming error:', error);
           set({
             error,
             isLoading: false
           });
+        },
+        // onProgress - progress updates
+        (progress: { stage: string; message: string }) => {
+          console.log('📊 Progress:', progress.stage, '-', progress.message);
         }
       );
 
