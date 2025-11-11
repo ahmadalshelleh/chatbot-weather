@@ -1,18 +1,20 @@
 import { Request, Response } from 'express';
 import { ChatService } from '../services/chat.service';
-import { OrchestratorService } from '../orchestrator/orchestrator.service';
+import { LangGraphOrchestrator } from '../orchestrator/langgraph.orchestrator';
 import { SessionRepository } from '../repositories/session.repository';
 import { ChatRequest } from '../types';
 
 export class ChatController {
   private chatService: ChatService;
-  private orchestrator: OrchestratorService;
+  private orchestrator: LangGraphOrchestrator;
   private sessionRepository: SessionRepository;
 
   constructor() {
     this.chatService = new ChatService();
-    this.orchestrator = new OrchestratorService();
     this.sessionRepository = new SessionRepository();
+    this.orchestrator = new LangGraphOrchestrator();
+
+    console.log('🔵 Using LangGraph Orchestrator');
   }
 
   /**
@@ -174,6 +176,8 @@ export class ChatController {
       res.setHeader('Connection', 'keep-alive');
       res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
 
+      console.log(`📡 Starting SSE stream for session: ${sessionId}`);
+
       // Process chat with streaming via orchestrator
       const stream = this.orchestrator.processChatStream(
         message,
@@ -181,10 +185,23 @@ export class ChatController {
         maxIterations
       );
 
+      let eventCount = 0;
+
       for await (const event of stream) {
+        eventCount++;
+        console.log(`📤 Sending SSE event #${eventCount}: ${event.type}`);
+
         // Send SSE event
-        res.write(`data: ${JSON.stringify(event)}\n\n`);
+        const sseData = `data: ${JSON.stringify(event)}\n\n`;
+        res.write(sseData);
+
+        // Flush immediately if available
+        if (typeof (res as any).flush === 'function') {
+          (res as any).flush();
+        }
       }
+
+      console.log(`✅ Stream complete. Sent ${eventCount} events`);
 
       // End the stream
       res.write('data: [DONE]\n\n');

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { ModelProvider } from '../types';
-import { OrchestratorService } from '../orchestrator/orchestrator.service';
+import { LangGraphOrchestrator } from '../orchestrator/langgraph.orchestrator';
 import { EvalRepository } from '../repositories/eval.repository';
 import {
   calculateTotalScore,
@@ -62,12 +62,12 @@ export interface EvalReport {
 }
 
 export class EvalService {
-  private orchestrator: OrchestratorService;
+  private orchestrator: LangGraphOrchestrator;
   private evalRepository: EvalRepository;
   private testCases: TestCase[];
 
   constructor() {
-    this.orchestrator = new OrchestratorService();
+    this.orchestrator = new LangGraphOrchestrator();
     this.evalRepository = new EvalRepository();
     this.testCases = this.loadTestCases();
   }

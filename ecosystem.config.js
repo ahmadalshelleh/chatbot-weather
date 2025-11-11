@@ -9,7 +9,6 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
-      env_file: './backend/.env',
       env: {
         NODE_ENV: 'production'
       },
@@ -28,7 +27,6 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '512M',
-      env_file: './frontend/.env',
       env: {
         NODE_ENV: 'production'
       },

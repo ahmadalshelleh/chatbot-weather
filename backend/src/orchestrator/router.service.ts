@@ -1,10 +1,6 @@
 import OpenAI from 'openai';
-import dotenv from 'dotenv';
 import { RoutingDecision, RoutingContext } from './routing.types';
 import { ModelProvider } from '../types';
-
-// Ensure dotenv is loaded
-dotenv.config();
 
 export class RouterService {
   private client: OpenAI;
