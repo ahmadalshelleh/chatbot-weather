@@ -216,6 +216,7 @@ export class LangGraphOrchestrator {
       let finalState: GraphStateType | null = null;
       let routingEmitted = false;
       let previousToolCount = 0;
+      let lastEmittedContent = '';
 
       for await (const state of streamGenerator) {
         finalState = state as GraphStateType;
@@ -270,14 +271,27 @@ export class LangGraphOrchestrator {
           previousToolCount = finalState.toolCallsMade.length;
         }
 
-        // Emit content when available
-        if (finalState.finalResponse) {
+        // Emit content when available - simulate streaming by chunking
+        if (finalState.finalResponse && finalState.finalResponse !== lastEmittedContent) {
           console.log(`✅ Emitting content`);
 
-          yield {
-            type: 'content',
-            data: finalState.finalResponse
-          };
+          // Split by words and emit word by word for smooth streaming effect
+          const words = finalState.finalResponse.split(' ');
+          let accumulatedContent = '';
+
+          for (let i = 0; i < words.length; i++) {
+            accumulatedContent += (i > 0 ? ' ' : '') + words[i];
+
+            yield {
+              type: 'content',
+              data: accumulatedContent
+            };
+
+            // Small delay for smooth streaming appearance
+            await new Promise(resolve => setTimeout(resolve, 20));
+          }
+
+          lastEmittedContent = finalState.finalResponse;
         }
       }
 
