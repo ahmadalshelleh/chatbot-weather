@@ -27,6 +27,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   sendMessage: async (content: string) => {
+    console.log('🎬 ChatStore: sendMessage called with:', content);
     const { messages, sessionId } = get();
 
     // Add user message
@@ -37,6 +38,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       timestamp: new Date()
     };
 
+    console.log('💬 Adding user message to state');
     set({ messages: [...messages, userMessage], isLoading: true, error: null });
 
     // Create a placeholder assistant message for streaming
@@ -53,6 +55,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }));
 
     try {
+      console.log('🔄 Starting streaming API call...');
       let streamedContent = '';
       let toolCalls: any[] = [];
       let modelDisplayName = '';
